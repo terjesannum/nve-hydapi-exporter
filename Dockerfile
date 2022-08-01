@@ -1,5 +1,8 @@
 FROM golang:1.18.5-alpine as builder
 
+LABEL org.opencontainers.image.authors="Terje Sannum <terje@offpiste.org>" \
+      org.opencontainers.image.source="https://github.com/terjesannum/nve-hydapi-exporter"
+
 WORKDIR /workspace
 COPY go.* ./
 RUN go mod download
