@@ -7,7 +7,7 @@ This prometheus exporter will get data from [NVE's HydAPI](https://hydapi.nve.no
 Docker image is available on [ghcr.io](https://github.com/terjesannum/nve-hydapi-exporter/pkgs/container/nve-hydapi-exporter).
 
 ```sh
-docker run -d -p 8080:8080 --restart always ghcr.io/terjesannum/nve-hydapi-exporter:3 --key ... --stations 12.215.0,12.611.0
+docker run -d -p 8080:8080 --restart always ghcr.io/terjesannum/nve-hydapi-exporter:3 --key ... --stations 12.215.0,12.611.0 --interval 10 --max-age 24
 ```
 
 Environment variables `NVE_API_KEY` and `NVE_STATIONS` can also be used for the options.
@@ -19,8 +19,8 @@ Use [NVE's Sildre](https://sildre.nve.no/) to find the ids for the stations you 
 ```
 # HELP nve_station_info Station info
 # TYPE nve_station_info gauge
-nve_station_info{lake="",latitude="60.891720",longitude="8.332810",name="Storeskar",river="Hemsil",station_id="12.215.0"} 1
-nve_station_info{lake="",latitude="60.695260",longitude="9.018590",name="Liaåni",river="Hallingdalsvassdrage",station_id="12.611.0"} 1
+nve_station_info{lake="",latitude="60.891720",longitude="8.332810",masl="900",name="Storeskar",river="Hemsil",station_id="12.215.0"} 1
+nve_station_info{lake="",latitude="60.695260",longitude="9.018590",masl="211",name="Liaåni",river="Hallingdalsvassdrage",station_id="12.611.0"} 1
 
 # HELP nve_station_water_flow Water flow
 # TYPE nve_station_water_flow gauge

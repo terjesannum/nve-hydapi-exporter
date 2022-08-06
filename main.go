@@ -21,12 +21,14 @@ var (
 	key        string
 	stations   []Station
 	interval   int
+	maxAge     int
 )
 
 type Station struct {
 	Data []struct {
 		Id         string  `json:"stationId"`
 		Name       string  `json:"stationName"`
+		Masl       int     `json:"masl"`
 		LakeName   string  `json:"LakeName"`
 		RiverName  string  `json:"riverName"`
 		Latitude   float64 `json:"latitude"`
@@ -65,7 +67,7 @@ func newNveCollector(stations []Station) *nveCollector {
 		stationInfo: prometheus.NewDesc(
 			"nve_station_info",
 			"Station info",
-			[]string{"station_id", "name", "lake", "river", "latitude", "longitude"},
+			[]string{"station_id", "name", "lake", "river", "masl", "latitude", "longitude"},
 			nil,
 		),
 		waterLevel: prometheus.NewDesc(
@@ -113,6 +115,7 @@ func (collector *nveCollector) Collect(ch chan<- prometheus.Metric) {
 			station.Data[0].Name,
 			station.Data[0].LakeName,
 			station.Data[0].RiverName,
+			fmt.Sprintf("%d", station.Data[0].Masl),
 			fmt.Sprintf("%f", station.Data[0].Latitude),
 			fmt.Sprintf("%f", station.Data[0].Longitude),
 		)
@@ -166,6 +169,7 @@ func init() {
 	var s string
 	flag.StringVar(&key, "key", os.Getenv("NVE_API_KEY"), "NVE api key")
 	flag.IntVar(&interval, "interval", 10, "Update interval (minutes)")
+	flag.IntVar(&maxAge, "max-age", 24, "Maxium age of observation (hours) to be included")
 	flag.StringVar(&s, "stations", os.Getenv("NVE_STATIONS"), "Comma separated list of station ids")
 	flag.Parse()
 	for _, station := range strings.Split(s, ",") {
@@ -202,7 +206,25 @@ func (station *Station) updateData(c *http.Client, parameter int) {
 	getJson(c, fmt.Sprintf("https://hydapi.nve.no/api/v1/Observations?StationId=%s&ResolutionTime=0&Parameter=%d", station.Data[0].Id, parameter), &obs)
 	timeDiff := time.Now().Sub(obs.Data[0].Observations[0].Time)
 	station.Measurements[parameter] = obs.Data[0].Observations[0].Value
-	station.Valid[parameter] = timeDiff.Hours() < 24 // flag observation as invalid if older than 24h
+	if timeDiff.Hours() > float64(maxAge) {
+		// flag observation as invalid if older than maxAge
+		station.Valid[parameter] = false
+		log.Printf("Too old observation %d for %s: %s\n", parameter, station.Data[0].Id, obs.Data[0].Observations[0].Time)
+	} else {
+		station.Valid[parameter] = true
+	}
+	if station.Valid[parameter] {
+		if parameter == 1000 && station.Data[0].Masl > 10 && obs.Data[0].Observations[0].Value <= 0 {
+			// Some stations seems to sometimes report 0 as waterlevel,
+			// flag as invalid for stations placed more than 10 meters above sea level
+			station.Valid[parameter] = false
+			log.Printf("Invalid observation %d for %s: %f\n", parameter, station.Data[0].Id, obs.Data[0].Observations[0].Value)
+		} else if parameter == 1001 && obs.Data[0].Observations[0].Value <= 0 {
+			// Drop water flow observations <= 0
+			station.Valid[parameter] = false
+			log.Printf("Invalid observation %d for %s: %f\n", parameter, station.Data[0].Id, obs.Data[0].Observations[0].Value)
+		}
+	}
 }
 
 func (station *Station) startCollector(ctx context.Context, client *http.Client, parameter int) {
