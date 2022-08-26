@@ -57,8 +57,11 @@ type nveCollector struct {
 	stationInfo      *prometheus.Desc
 	waterLevel       *prometheus.Desc
 	airTemperature   *prometheus.Desc
+	airHumidity      *prometheus.Desc
 	waterTemperature *prometheus.Desc
 	waterFlow        *prometheus.Desc
+	windDirection    *prometheus.Desc
+	windSpeed        *prometheus.Desc
 }
 
 func newNveCollector(stations []Station) *nveCollector {
@@ -82,6 +85,12 @@ func newNveCollector(stations []Station) *nveCollector {
 			[]string{"station_id"},
 			nil,
 		),
+		airHumidity: prometheus.NewDesc(
+			"nve_station_air_humidity",
+			"Air humidity",
+			[]string{"station_id"},
+			nil,
+		),
 		waterTemperature: prometheus.NewDesc(
 			"nve_station_water_temperature",
 			"Water temperature",
@@ -94,6 +103,18 @@ func newNveCollector(stations []Station) *nveCollector {
 			[]string{"station_id"},
 			nil,
 		),
+		windDirection: prometheus.NewDesc(
+			"nve_station_wind_direction",
+			"Wind direction",
+			[]string{"station_id"},
+			nil,
+		),
+		windSpeed: prometheus.NewDesc(
+			"nve_station_wind_speed",
+			"Wind speed",
+			[]string{"station_id"},
+			nil,
+		),
 	}
 }
 
@@ -101,8 +122,11 @@ func (collector *nveCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.stationInfo
 	ch <- collector.waterLevel
 	ch <- collector.airTemperature
+	ch <- collector.airHumidity
 	ch <- collector.waterTemperature
 	ch <- collector.waterFlow
+	ch <- collector.windDirection
+	ch <- collector.windSpeed
 }
 
 func (collector *nveCollector) Collect(ch chan<- prometheus.Metric) {
@@ -142,9 +166,30 @@ func (collector *nveCollector) Collect(ch chan<- prometheus.Metric) {
 						station.Measurements[s.Parameter],
 						station.Data[0].Id,
 					)
+				} else if s.ParameterName == "Relativ luftfuktighet" {
+					ch <- prometheus.MustNewConstMetric(
+						collector.airHumidity,
+						prometheus.GaugeValue,
+						station.Measurements[s.Parameter],
+						station.Data[0].Id,
+					)
 				} else if s.ParameterName == "Vanntemperatur" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.waterTemperature,
+						prometheus.GaugeValue,
+						station.Measurements[s.Parameter],
+						station.Data[0].Id,
+					)
+				} else if s.ParameterName == "Vindretning" {
+					ch <- prometheus.MustNewConstMetric(
+						collector.windDirection,
+						prometheus.GaugeValue,
+						station.Measurements[s.Parameter],
+						station.Data[0].Id,
+					)
+				} else if s.ParameterName == "Vindhastighet" {
+					ch <- prometheus.MustNewConstMetric(
+						collector.windSpeed,
 						prometheus.GaugeValue,
 						station.Measurements[s.Parameter],
 						station.Data[0].Id,
@@ -262,7 +307,13 @@ func main() {
 				station.startCollector(ctx, &client, serie.Parameter)
 			} else if serie.ParameterName == "Lufttemperatur" {
 				station.startCollector(ctx, &client, serie.Parameter)
+			} else if serie.ParameterName == "Relativ luftfuktighet" {
+				station.startCollector(ctx, &client, serie.Parameter)
 			} else if serie.ParameterName == "Vanntemperatur" {
+				station.startCollector(ctx, &client, serie.Parameter)
+			} else if serie.ParameterName == "Vindretning" {
+				station.startCollector(ctx, &client, serie.Parameter)
+			} else if serie.ParameterName == "Vindhastighet" {
 				station.startCollector(ctx, &client, serie.Parameter)
 			}
 			time.Sleep(time.Second) // avoid hitting rate limit of 5 req/s
