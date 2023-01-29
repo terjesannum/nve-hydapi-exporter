@@ -118,7 +118,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 0,
         "y": 0
@@ -211,7 +211,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 12,
         "y": 0
@@ -304,10 +304,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 7
       },
       "id": 3,
       "options": {
@@ -397,10 +397,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 7
       },
       "id": 5,
       "options": {
@@ -490,10 +490,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 14
       },
       "id": 6,
       "options": {
@@ -583,10 +583,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 14
       },
       "id": 8,
       "options": {
@@ -678,10 +678,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 21
       },
       "id": 7,
       "options": {
@@ -752,6 +752,6 @@
   "timezone": "",
   "title": "NVE",
   "uid": "ZcY8WxzVz",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
