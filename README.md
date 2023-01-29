@@ -2,6 +2,8 @@
 
 This prometheus exporter will get data from [NVE's HydAPI](https://hydapi.nve.no/) and make them available as prometheus metrics.
 
+![Grafana dashboard](grafana/dashboard.png)
+
 ## Running
 
 Docker image is available on [ghcr.io](https://github.com/terjesannum/nve-hydapi-exporter/pkgs/container/nve-hydapi-exporter).
