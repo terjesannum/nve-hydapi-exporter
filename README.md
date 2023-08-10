@@ -9,7 +9,7 @@ This prometheus exporter will get data from [NVE's HydAPI](https://hydapi.nve.no
 Docker image is available on [ghcr.io](https://github.com/terjesannum/nve-hydapi-exporter/pkgs/container/nve-hydapi-exporter).
 
 ```sh
-docker run -d -p 8080:8080 --restart always ghcr.io/terjesannum/nve-hydapi-exporter:5 --key ... --stations 12.215.0,12.611.0 --interval 10 --max-age 24
+docker run -d -p 8080:8080 --restart always ghcr.io/terjesannum/nve-hydapi-exporter:latest --key ... --stations 12.215.0,12.611.0 --interval 10 --max-age 24
 ```
 
 Environment variables `NVE_API_KEY` and `NVE_STATIONS` can also be used for the options.
