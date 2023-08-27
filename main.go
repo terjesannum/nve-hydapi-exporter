@@ -39,6 +39,7 @@ type Station struct {
 			Unit          string `json:"unit"`
 		} `json:"seriesList"`
 	} `json:"data"`
+	ActiveSeries map[string]int
 	Measurements map[int]float64
 	Valid        map[int]bool
 }
@@ -143,55 +144,55 @@ func (collector *nveCollector) Collect(ch chan<- prometheus.Metric) {
 			fmt.Sprintf("%f", station.Data[0].Latitude),
 			fmt.Sprintf("%f", station.Data[0].Longitude),
 		)
-		for _, s := range station.Data[0].SeriesList {
-			if station.Valid[s.Parameter] {
-				if s.ParameterName == "Vannstand" {
+		for sn, si := range station.ActiveSeries {
+			if station.Valid[si] {
+				if sn == "Vannstand" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.waterLevel,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
-				} else if s.ParameterName == "Vannføring" {
+				} else if sn == "Vannføring" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.waterFlow,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
-				} else if s.ParameterName == "Lufttemperatur" {
+				} else if sn == "Lufttemperatur" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.airTemperature,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
-				} else if s.ParameterName == "Relativ luftfuktighet" {
+				} else if sn == "Relativ luftfuktighet" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.airHumidity,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
-				} else if s.ParameterName == "Vanntemperatur" {
+				} else if sn == "Vanntemperatur" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.waterTemperature,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
-				} else if s.ParameterName == "Vindretning" {
+				} else if sn == "Vindretning" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.windDirection,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
-				} else if s.ParameterName == "Vindhastighet" {
+				} else if sn == "Vindhastighet" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.windSpeed,
 						prometheus.GaugeValue,
-						station.Measurements[s.Parameter],
+						station.Measurements[si],
 						station.Data[0].Id,
 					)
 				}
@@ -241,6 +242,7 @@ func getStation(c *http.Client, id string) Station {
 	station := new(Station)
 	getJson(c, fmt.Sprintf("https://hydapi.nve.no/api/v1/Stations?StationId=%s", id), &station)
 	log.Printf("Found station: %s\n", station.Data[0].Name)
+	station.ActiveSeries = make(map[string]int)
 	station.Measurements = make(map[int]float64)
 	station.Valid = make(map[int]bool)
 	return *station
@@ -301,22 +303,28 @@ func main() {
 	}
 	for _, station := range stations {
 		for _, serie := range station.Data[0].SeriesList {
-			if serie.ParameterName == "Vannstand" {
-				station.startCollector(ctx, &client, serie.Parameter)
-			} else if serie.ParameterName == "Vannføring" {
-				station.startCollector(ctx, &client, serie.Parameter)
-			} else if serie.ParameterName == "Lufttemperatur" {
-				station.startCollector(ctx, &client, serie.Parameter)
-			} else if serie.ParameterName == "Relativ luftfuktighet" {
-				station.startCollector(ctx, &client, serie.Parameter)
-			} else if serie.ParameterName == "Vanntemperatur" {
-				station.startCollector(ctx, &client, serie.Parameter)
-			} else if serie.ParameterName == "Vindretning" {
-				station.startCollector(ctx, &client, serie.Parameter)
-			} else if serie.ParameterName == "Vindhastighet" {
-				station.startCollector(ctx, &client, serie.Parameter)
+			_, exists := station.ActiveSeries[serie.ParameterName]
+			if !(exists) {
+				station.ActiveSeries[serie.ParameterName] = serie.Parameter
+				if serie.ParameterName == "Vannstand" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Vannføring" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Lufttemperatur" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Relativ luftfuktighet" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Vanntemperatur" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Vindretning" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Vindhastighet" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else {
+					delete(station.ActiveSeries, serie.ParameterName)
+				}
+				time.Sleep(time.Second) // avoid hitting rate limit of 5 req/s
 			}
-			time.Sleep(time.Second) // avoid hitting rate limit of 5 req/s
 		}
 	}
 	collector := newNveCollector(stations)
