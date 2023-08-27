@@ -63,6 +63,7 @@ type nveCollector struct {
 	waterFlow        *prometheus.Desc
 	windDirection    *prometheus.Desc
 	windSpeed        *prometheus.Desc
+	reservoirVolume  *prometheus.Desc
 }
 
 func newNveCollector(stations []Station) *nveCollector {
@@ -116,6 +117,12 @@ func newNveCollector(stations []Station) *nveCollector {
 			[]string{"station_id"},
 			nil,
 		),
+		reservoirVolume: prometheus.NewDesc(
+			"nve_station_reservoir_volume",
+			"Reservoir volume",
+			[]string{"station_id"},
+			nil,
+		),
 	}
 }
 
@@ -128,6 +135,7 @@ func (collector *nveCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.waterFlow
 	ch <- collector.windDirection
 	ch <- collector.windSpeed
+	ch <- collector.reservoirVolume
 }
 
 func (collector *nveCollector) Collect(ch chan<- prometheus.Metric) {
@@ -191,6 +199,13 @@ func (collector *nveCollector) Collect(ch chan<- prometheus.Metric) {
 				} else if sn == "Vindhastighet" {
 					ch <- prometheus.MustNewConstMetric(
 						collector.windSpeed,
+						prometheus.GaugeValue,
+						station.Measurements[si],
+						station.Data[0].Id,
+					)
+				} else if sn == "Magasinvolum" {
+					ch <- prometheus.MustNewConstMetric(
+						collector.reservoirVolume,
 						prometheus.GaugeValue,
 						station.Measurements[si],
 						station.Data[0].Id,
@@ -319,6 +334,8 @@ func main() {
 				} else if serie.ParameterName == "Vindretning" {
 					station.startCollector(ctx, &client, serie.Parameter)
 				} else if serie.ParameterName == "Vindhastighet" {
+					station.startCollector(ctx, &client, serie.Parameter)
+				} else if serie.ParameterName == "Magasinvolum" {
 					station.startCollector(ctx, &client, serie.Parameter)
 				} else {
 					delete(station.ActiveSeries, serie.ParameterName)
