@@ -1,4 +1,4 @@
-FROM golang:1.19.5-alpine3.17 as builder
+FROM golang:1.21.0-alpine3.18 as builder
 
 RUN apk --update add ca-certificates
 RUN echo 'nve:*:65532:' > /tmp/group && \

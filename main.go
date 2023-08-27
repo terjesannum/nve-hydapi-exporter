@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -231,7 +231,7 @@ func getJson(c *http.Client, url string, target interface{}) {
 	res, err := c.Do(req)
 	exitOnError("Http request failed", err)
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	exitOnError("Failed reading http response", err)
 	err = json.Unmarshal([]byte(body), &target)
 	exitOnError(fmt.Sprintf("Json error: %s\n", body), err)
