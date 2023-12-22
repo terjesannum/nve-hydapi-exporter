@@ -1,16 +1,13 @@
 FROM golang:1.21.5-alpine3.19 as builder
 
-RUN apk --update add ca-certificates
+RUN apk --update add ca-certificates make git
 RUN echo 'nve:*:65532:' > /tmp/group && \
     echo 'nve:*:65532:65532:nve:/:/nve-hydapi-exporter' > /tmp/passwd
 
 WORKDIR /workspace
-COPY go.* ./
-RUN go mod download
-
 COPY . /workspace
 
-RUN CGO_ENABLED=0 go build -a -o nve-hydapi-exporter .
+RUN make build
 
 FROM scratch
 
