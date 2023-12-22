@@ -14,14 +14,16 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
 )
 
 var (
-	stationIds []string
-	key        string
-	stations   []Station
-	interval   int
-	maxAge     int
+	stationIds  []string
+	key         string
+	stations    []Station
+	interval    int
+	maxAge      int
+	showVersion bool
 )
 
 type Station struct {
@@ -228,6 +230,7 @@ func exitOnError(msg string, err error) {
 
 func init() {
 	var s string
+	flag.BoolVar(&showVersion, "version", false, "Print version information and exit")
 	flag.StringVar(&key, "key", os.Getenv("NVE_API_KEY"), "NVE api key")
 	flag.IntVar(&interval, "interval", 10, "Update interval (minutes)")
 	flag.IntVar(&maxAge, "max-age", 24, "Maxium age of observation (hours) to be included")
@@ -307,6 +310,11 @@ func (station *Station) startCollector(ctx context.Context, client *http.Client,
 }
 
 func main() {
+	if showVersion {
+		fmt.Printf("%s\n", version.Print("nve-hydapi-exporter"))
+		os.Exit(0)
+	}
+	log.Printf("Starting nve-hydapi-exporter %s\n", version.Version)
 	ctx := context.Background()
 	client := http.Client{
 		Timeout: time.Second * 10,
