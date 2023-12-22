@@ -352,6 +352,7 @@ func main() {
 			}
 		}
 	}
+	prometheus.MustRegister(version.NewCollector("nve_hydapi_exporter"))
 	collector := newNveCollector(stations)
 	prometheus.MustRegister(collector)
 	http.Handle("/metrics", promhttp.Handler())
