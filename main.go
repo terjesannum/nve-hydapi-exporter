@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	promver "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 )
@@ -352,7 +353,7 @@ func main() {
 			}
 		}
 	}
-	prometheus.MustRegister(version.NewCollector("nve_hydapi_exporter"))
+	prometheus.MustRegister(promver.NewCollector("nve_hydapi_exporter"))
 	collector := newNveCollector(stations)
 	prometheus.MustRegister(collector)
 	http.Handle("/metrics", promhttp.Handler())
