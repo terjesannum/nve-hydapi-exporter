@@ -270,6 +270,11 @@ func getStation(c *http.Client, id string) Station {
 func (station *Station) updateData(c *http.Client, parameter int) {
 	obs := new(observations)
 	getJson(c, fmt.Sprintf("https://hydapi.nve.no/api/v1/Observations?StationId=%s&ResolutionTime=0&Parameter=%d", station.Data[0].Id, parameter), &obs)
+	if len(obs.Data[0].Observations) == 0 {
+		station.Valid[parameter] = false
+		log.Printf("No observation %d for %s\n", parameter, station.Data[0].Id)
+		return
+	}
 	timeDiff := time.Now().Sub(obs.Data[0].Observations[0].Time)
 	station.Measurements[parameter] = obs.Data[0].Observations[0].Value
 	if timeDiff.Hours() > float64(maxAge) {
